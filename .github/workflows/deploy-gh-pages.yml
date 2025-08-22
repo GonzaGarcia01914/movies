@@ -15,7 +15,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          # 🔧 fija versión explícita para evitar el error
+         
           flutter-version: '3.35.1'   # usa la misma que tienes localmente si quieres
           channel: 'stable'
 
