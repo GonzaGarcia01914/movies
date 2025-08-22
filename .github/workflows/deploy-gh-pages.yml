@@ -1,17 +1,36 @@
 name: Deploy Flutter Web to GH Pages
+
 on:
   push:
-    branches: [ main ]   # o la rama donde merges
+    branches: [ main ]   # o la rama que uses
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with: { flutter-version: 'stable' }
-      - run: flutter pub get
-      - run: flutter build web --release --base-href /flutter-movies/ --pwa-strategy=none
-      - uses: peaceiris/actions-gh-pages@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          # 🔧 fija versión explícita para evitar el error
+          flutter-version: '3.35.1'   # usa la misma que tienes localmente si quieres
+          channel: 'stable'
+
+      - name: Enable web
+        run: flutter config --enable-web
+
+      - name: Pub get
+        run: flutter pub get
+
+      - name: Build web (GitHub Pages)
+        run: flutter build web --release --base-href /movies/ --pwa-strategy=none
+        #           ^^^^^^^^^  usa EL NOMBRE DEL REPO exactamente: movies
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: build/web
