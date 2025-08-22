@@ -4,60 +4,74 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Visor de Código — movies</title>
+    <title>Code Viewer</title>
     <style>
         :root {
-            --border: #e5e7eb;
-            --bg: #fafafa;
-            --text: #111827;
+            --bg: #0b0f14;
+            /* fondo general oscuro */
+            --panel: #0f141b;
+            /* paneles */
+            --panel-2: #0d1218;
+            /* hover/variación */
+            --text: #e5e7eb;
+            /* texto claro */
+            --muted: #94a3b8;
+            /* texto tenue */
+            --border: #1f2937;
+            /* bordes */
+            --accent: #334155;
+            /* detalles */
+            --accent-2: #1e293b;
+            /* hover */
         }
 
         * {
             box-sizing: border-box;
         }
 
+        html,
+        body {
+            height: 100%;
+        }
+
         body {
             margin: 0;
-            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Arial, sans-serif;
+            background: var(--bg);
             color: var(--text);
-        }
-
-        header {
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        header .muted {
-            color: #6b7280;
-            font-weight: 500;
         }
 
         #layout {
             display: grid;
-            grid-template-columns: 280px 1fr;
-            height: calc(100vh - 56px);
+            grid-template-columns: 300px 1fr;
+            height: 100vh;
+            width: 100vw;
         }
 
         #sidebar {
+            background: var(--panel);
             border-right: 1px solid var(--border);
             overflow: auto;
-            padding: 8px;
-            background: var(--bg);
+            padding: 10px;
+        }
+
+        .search {
+            margin-bottom: 10px;
+        }
+
+        .search input {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--panel-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            outline: none;
         }
 
         #tree {
             list-style: none;
-            padding-left: 0;
+            padding: 0;
             margin: 0;
             font-size: 14px;
         }
@@ -66,24 +80,27 @@
             margin: 2px 0;
         }
 
-        .dir,
-        .file {
+        .row {
             display: flex;
             align-items: center;
             gap: 8px;
             padding: 6px 8px;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
         }
 
-        .dir:hover,
-        .file:hover {
-            background: #eef2ff;
+        .row:hover {
+            background: var(--accent-2);
         }
 
-        .dir>.chev {
+        .dir .chev {
             width: 12px;
             text-align: center;
+            color: var(--muted);
+        }
+
+        .file {
+            color: var(--text);
         }
 
         .indent {
@@ -94,75 +111,18 @@
             height: 100%;
             width: 100%;
         }
-
-        .toolbar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .toolbar input {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-        }
-
-        .badge {
-            padding: 2px 6px;
-            font-size: 12px;
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            background: #fff;
-        }
-
-        button {
-            padding: 8px 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: #fff;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #f3f4f6;
-        }
-
-        .small {
-            font-size: 12px;
-            color: #6b7280;
-        }
     </style>
 </head>
 
 <body>
-    <header>
-        <h1>Visor de Código</h1>
-        <span class="muted" id="repoLabel"></span>
-        <span class="badge" id="branchLabel"></span>
-        <span class="small">Haz clic en la barra izquierda para abrir archivos. Filtra con el buscador.</span>
-        <span style="flex:1"></span>
-        <button id="openGH">Ver repo en GitHub</button>
-    </header>
-
     <div id="layout">
         <aside id="sidebar">
-            <div class="toolbar">
+            <div class="search">
                 <input id="filter" type="search" placeholder="Filtrar archivos (ej. lib/ o main.dart)" />
             </div>
             <ul id="tree"></ul>
         </aside>
-        <main style="display:flex; flex-direction:column; min-width:0;">
-            <div class="toolbar" style="gap:12px;">
-                <span id="currentPath" class="small">Selecciona un archivo…</span>
-                <span style="flex:1"></span>
-                <button id="openFileGH" disabled>Ver en GitHub</button>
-                <button id="rawBtn" disabled>Raw</button>
-                <button id="copyBtn" disabled>Copiar</button>
-                <button id="themeBtn">Tema</button>
-            </div>
+        <main>
             <div id="editor"></div>
         </main>
     </div>
@@ -170,32 +130,17 @@
     <!-- Monaco via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
     <script>
-        // ======= Config =======
+        // ======= Config por defecto (puedes pasar ?owner=&repo=&branch= por query) =======
         const qs = new URLSearchParams(location.search);
         const owner = qs.get('owner') || 'GonzaGarcia01914';
         const repo = qs.get('repo') || 'movies';
         const branch = qs.get('branch') || 'main';
 
-        const repoLabel = document.getElementById('repoLabel');
-        const branchLabel = document.getElementById('branchLabel');
-        repoLabel.textContent = `${owner}/${repo}`;
-        branchLabel.textContent = branch;
-        document.getElementById('openGH').onclick = () => {
-            window.open(`https://github.com/${owner}/${repo}`, '_blank');
-        };
-
         const treeEl = document.getElementById('tree');
         const filterEl = document.getElementById('filter');
-        const currentPathEl = document.getElementById('currentPath');
-        const openFileBtn = document.getElementById('openFileGH');
-        const rawBtn = document.getElementById('rawBtn');
-        const copyBtn = document.getElementById('copyBtn');
-        const themeBtn = document.getElementById('themeBtn');
         let monacoEditor, monacoModel;
-        let currentPath = null;
-        let isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-        // Monaco bootstrap
+        // Monaco bootstrap (tema oscuro fijo)
         require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
         window.MonacoEnvironment = {
             getWorkerUrl: (_, label) => {
@@ -217,19 +162,9 @@
             if (p.endsWith('.js')) return 'javascript';
             return 'plaintext';
         }
-
         function encPath(path) { return path.split('/').map(encodeURIComponent).join('/'); }
 
         async function loadFile(path) {
-            currentPath = path;
-            currentPathEl.textContent = path;
-            openFileBtn.disabled = rawBtn.disabled = copyBtn.disabled = false;
-            openFileBtn.onclick = () => window.open(`https://github.com/${owner}/${repo}/blob/${branch}/${encPath(path)}`, '_blank');
-            rawBtn.onclick = () => window.open(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${encPath(path)}`, '_blank');
-            copyBtn.onclick = async () => {
-                try { await navigator.clipboard.writeText(monacoModel.getValue()); copyBtn.textContent = 'Copiado ✓'; setTimeout(() => copyBtn.textContent = 'Copiar', 1200); } catch { }
-            };
-
             const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${encPath(path)}`;
             const res = await fetch(rawUrl);
             const text = res.ok ? await res.text() : `No se pudo cargar ${path} (HTTP ${res.status})`;
@@ -240,14 +175,11 @@
         }
 
         function buildTree(nodes) {
-            // nodes: array de { path, type: 'blob'|'tree' }
-            // Ignora carpetas/archivos irrelevantes para demos:
             const ignore = ['.git/', 'build/', '.dart_tool/', '.idea/', '.vscode/', 'node_modules/'];
             const filtered = nodes.filter(n => {
                 return !ignore.some(ig => n.path.startsWith(ig)) && (n.type === 'blob' || n.type === 'tree');
             });
 
-            // Construye estructura jerárquica
             const root = {};
             for (const n of filtered) {
                 const parts = n.path.split('/');
@@ -274,7 +206,7 @@
 
                 const li = document.createElement('li');
                 const row = document.createElement('div');
-                row.className = item.type === 'tree' ? 'dir' : 'file';
+                row.className = `row ${item.type === 'tree' ? 'dir' : 'file'}`;
                 if (depth) row.style.paddingLeft = `${8 + depth * 10}px`;
 
                 if (item.type === 'tree') {
@@ -298,10 +230,7 @@
                     };
 
                     li.appendChild(row);
-                    // Render recursivo si hay hijos y si pasan el filtro
-                    if (item.children) {
-                        renderTree(childrenUl, item.children, depth + 1, filter);
-                    }
+                    if (item.children) renderTree(childrenUl, item.children, depth + 1, filter);
                     li.appendChild(childrenUl);
                 } else {
                     row.textContent = item.name;
@@ -313,7 +242,7 @@
         }
 
         async function bootstrap() {
-            // Crea editor
+            // Crea editor oscuro
             await new Promise(resolve => {
                 require(['vs/editor/editor.main'], function () {
                     monacoEditor = monaco.editor.create(document.getElementById('editor'), {
@@ -323,13 +252,13 @@
                         automaticLayout: true,
                         wordWrap: 'on',
                         minimap: { enabled: true },
-                        theme: isDark ? 'vs-dark' : 'vs'
+                        theme: 'vs-dark'
                     });
                     resolve();
                 });
             });
 
-            // Carga árbol de archivos
+            // Carga árbol del repo
             const api = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
             const res = await fetch(api);
             if (!res.ok) {
@@ -340,7 +269,6 @@
             const nodes = json.tree || [];
             const map = buildTree(nodes);
 
-            // Render inicial sin filtro
             renderTree(treeEl, map, 0, '');
 
             // Filtro
@@ -349,17 +277,12 @@
                 renderTree(treeEl, map, 0, q);
             });
 
-            // Abre un archivo por defecto si existe
+            // Archivo por defecto
             const prefer = ['lib/main.dart', 'lib/app.dart', 'pubspec.yaml', 'README.md'];
             const allFiles = nodes.filter(n => n.type === 'blob').map(n => n.path);
             const first = prefer.find(p => allFiles.includes(p)) || allFiles.find(p => p.endsWith('.dart') || p.endsWith('.yaml') || p.endsWith('.md'));
             if (first) loadFile(first);
         }
-
-        themeBtn.onclick = () => {
-            isDark = !isDark;
-            monaco.editor.setTheme(isDark ? 'vs-dark' : 'vs');
-        };
 
         bootstrap();
     </script>
