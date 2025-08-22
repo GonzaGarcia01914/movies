@@ -2,7 +2,7 @@ name: Deploy Flutter Web to GH Pages
 
 on:
   push:
-    branches: [ main ]   # o la rama que uses
+    branches: [ main ]
 
 jobs:
   build:
@@ -15,8 +15,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-         
-          flutter-version: '3.35.1'   # usa la misma que tienes localmente si quieres
+          flutter-version: '3.35.1'
           channel: 'stable'
 
       - name: Enable web
@@ -26,8 +25,14 @@ jobs:
         run: flutter pub get
 
       - name: Build web (GitHub Pages)
-        run: flutter build web --release --base-href /movies/ --pwa-strategy=none
-        #           ^^^^^^^^^  usa EL NOMBRE DEL REPO exactamente: movies
+        run: |
+          flutter build web \
+            --release \
+            --base-href /movies/ \
+            --pwa-strategy=none \
+            --dart-define=PROXY_BASE=${{ secrets.PROXY_BASE }}
+            --dart-define=LANG=en-US
+        # si quieres también inyectar el idioma
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
