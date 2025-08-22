@@ -25,14 +25,20 @@ jobs:
         run: flutter pub get
 
       - name: Build web (GitHub Pages)
+        env:
+          PROXY_BASE: ${{ secrets.PROXY_BASE }}
+          LANG: en-US
+        run: flutter build web --release --base-href /movies/ --pwa-strategy=none --dart-define=PROXY_BASE=$PROXY_BASE --dart-define=LANG=$LANG
+
+              # si quieres también inyectar el idioma
+      - name: Sanity check PROXY_BASE
         run: |
-          flutter build web \
-            --release \
-            --base-href /movies/ \
-            --pwa-strategy=none \
-            --dart-define=PROXY_BASE=${{ secrets.PROXY_BASE }}
-            --dart-define=LANG=en-US
-        # si quieres también inyectar el idioma
+          set -e
+          if [ -z "${{ secrets.PROXY_BASE }}" ]; then
+            echo "❌ Missing PROXY_BASE secret"; exit 1
+          fi
+          echo "✅ PROXY_BASE is set"
+          curl -s -I "${{ secrets.PROXY_BASE }}/movie/popular?language=en-US&page=1" | head -n1
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
