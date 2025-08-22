@@ -80777,7 +80777,7 @@ lp(a,b){var s=t.N
 s=A.r(s,s)
 s.m(0,"language","en-US")
 if(b!=null)s.R(0,b)
-return A.e_(a).VU(s)},
+return A.e_("https://tmdbproxy-toiqup4nua-uc.a.run.app"+a).VU(s)},
 vX(a){return this.lp(a,null)}}
 A.Jw.prototype={
 n8(a,b){var s,r,q,p=null,o=b.dl($.GL(),t.N),n=t.PF
