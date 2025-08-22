@@ -1,6 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/movies/presentation/home_screen.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+
+class AppScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse, // ← habilita drag con mouse
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.unknown,
+    PointerDeviceKind.trackpad, // ← gestos de trackpad
+  };
+}
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
@@ -15,6 +28,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Movies',
+      scrollBehavior: AppScrollBehavior(),
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: baseBlue,
