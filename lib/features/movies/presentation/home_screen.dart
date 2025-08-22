@@ -7,6 +7,7 @@ import 'package:flutter_movies_portfolio/features/movies/vm/movies_providers.dar
 // Widgets
 import 'package:flutter_movies_portfolio/features/movies/presentation/widgets/movie_big_card.dart';
 import 'package:flutter_movies_portfolio/features/movies/presentation/widgets/movie_small_card.dart';
+import 'package:flutter_movies_portfolio/features/movies/presentation/widgets/drag_scroll_row.dart';
 import 'package:flutter_movies_portfolio/features/movies/data/models/media_type.dart';
 import 'package:flutter_movies_portfolio/features/movies/data/models/title_result.dart';
 import 'package:flutter_movies_portfolio/features/movies/data/models/movie.dart';
@@ -179,13 +180,9 @@ class _HomeSections extends StatelessWidget {
         SizedBox(
           height: 390,
           child: moviesAsync.when(
-            data: (movies) => ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(right: 12),
-              itemBuilder: (_, i) =>
-                  MovieBigCard(movie: movies[i], mediaType: MediaType.movie),
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
+            data: (movies) => DragScrollRow(
               itemCount: movies.length,
+              itemBuilder: (_, i) => MovieBigCard(movie: movies[i]),
             ),
             loading: () => const _LoadingRow(itemWidth: 220, height: 390),
             error: (e, _) => _ErrorLabel(message: e.toString()),
